@@ -1,23 +1,65 @@
 cmake_minimum_required(VERSION 3.20)
 
 project(Relacy
+    VERSION 0.0.0
     LANGUAGES CXX
 )
 
-option(RELACY_BUILD_TESTS "Build Relacy tests" ON)
-option(RELACY_BUILD_EXAMPLES "Build Relacy examples" ON)
+option(RELACY_BUILD_TESTS "Build Relacy tests" ${PROJECT_IS_TOP_LEVEL})
+option(RELACY_BUILD_EXAMPLES "Build Relacy examples" ${PROJECT_IS_TOP_LEVEL})
+
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
 add_library(relacy INTERFACE)
+add_library(relacy::relacy ALIAS relacy)
 target_include_directories(relacy INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
+target_compile_features(relacy INTERFACE cxx_std_11)
 
 add_library(relacy_fakestd INTERFACE)
 target_include_directories(relacy_fakestd INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/relacy/fakestd>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+set(RELACY_INSTALL_CMAKEDIR "${CMAKE_INSTALL_LIBDIR}/cmake/relacy")
+set(RELACY_PACKAGE_VERSION "${PROJECT_VERSION}")
+
+install(TARGETS relacy
+    EXPORT relacyTargets
+    INCLUDES DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
+)
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/relacy/"
+    DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/relacy"
+)
+
+install(EXPORT relacyTargets
+    NAMESPACE relacy::
+    FILE relacyTargets.cmake
+    DESTINATION "${RELACY_INSTALL_CMAKEDIR}"
+)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/relacyConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/relacyConfig.cmake"
+    INSTALL_DESTINATION "${RELACY_INSTALL_CMAKEDIR}"
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/relacyConfigVersion.cmake"
+    VERSION "${RELACY_PACKAGE_VERSION}"
+    COMPATIBILITY ExactVersion
+    ARCH_INDEPENDENT
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/relacyConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/relacyConfigVersion.cmake"
+    DESTINATION "${RELACY_INSTALL_CMAKEDIR}"
 )
 
 function(add_relacy_test target_name source_file)

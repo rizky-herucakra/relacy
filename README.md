@@ -34,6 +34,45 @@ make build-all -j 8
 make test-all -j 8
 ```
 
+## Installing and packaging Relacy with CMake
+
+Relacy can be installed as a header-only CMake package and then consumed with
+`find_package()` in Config mode.
+
+Install it with:
+
+```
+cmake -S . -B build \
+  -DCMAKE_CXX_STANDARD=20 \
+  -DCMAKE_BUILD_TYPE=RelWithDebInfo
+cmake --build build
+cmake --install build --prefix /path/to/prefix
+```
+
+This installs:
+
+- headers under `/path/to/prefix/include/relacy`
+- package files under `/path/to/prefix/lib/cmake/relacy`
+
+In a downstream CMake project:
+
+```
+cmake_minimum_required(VERSION 3.20)
+project(my_relacy_app LANGUAGES CXX)
+
+find_package(relacy CONFIG REQUIRED)
+
+add_executable(my_relacy_app main.cpp)
+target_link_libraries(my_relacy_app PRIVATE relacy::relacy)
+```
+
+When configuring the downstream project, point CMake at the install prefix:
+
+```
+cmake -S . -B build -DCMAKE_PREFIX_PATH=/path/to/prefix
+cmake --build build
+```
+
 ## Toolchains known to work
 
 At a minimum, a C++11 compiler is assumed. The below compilers have
